@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: numbertalk
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./server/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  server:
+    build: ./server
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=super-secret
+      - DATABASE_URL=postgres://app:password@db:5432/numbertalk
+    depends_on:
+      - db
+    ports:
+      - "4000:4000"
+
+  client:
+    build: ./client
+    environment:
+      - VITE_API_URL=http://localhost:4000
+    depends_on:
+      - server
+    ports:
+      - "3000:4173"
+
+volumes:
+  db-data:
